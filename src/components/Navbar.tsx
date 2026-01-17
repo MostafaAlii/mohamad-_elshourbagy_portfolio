@@ -29,8 +29,7 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Home', href: '/' },
         { name: 'About Us', href: '#about' },
-        { name: 'Services', href: '#services' },
-        { name: 'Certification', href: '#certification' },
+        { name: 'Coaching Journeys', href: '#services' },
         { name: 'Gallery', href: '#gallery' },
         { name: 'Contact Us', href: '#contact' },
     ];
@@ -82,8 +81,8 @@ const Navbar = () => {
                                 {/* Underline on hover and active */}
                                 <span
                                     className={`absolute bottom-0 left-0 h-0.5 bg-navbar-text-hover transition-all duration-300 ${activeLink === link.href
-                                            ? 'w-full'
-                                            : 'w-0 group-hover:w-full'
+                                        ? 'w-full'
+                                        : 'w-0 group-hover:w-full'
                                         }`}
                                 ></span>
                             </a>
@@ -113,8 +112,8 @@ const Navbar = () => {
                                 href={link.href}
                                 onClick={(e) => handleScroll(e, link.href)}
                                 className={`block px-3 py-2 text-base font-medium transition-colors duration-200 rounded-md border-l-4 ${activeLink === link.href
-                                        ? 'text-navbar-text-hover border-navbar-text-hover bg-bg-accent'
-                                        : 'text-navbar-text border-transparent hover:text-navbar-text-hover hover:border-navbar-text-hover hover:bg-bg-accent'
+                                    ? 'text-navbar-text-hover border-navbar-text-hover bg-bg-accent'
+                                    : 'text-navbar-text border-transparent hover:text-navbar-text-hover hover:border-navbar-text-hover hover:bg-bg-accent'
                                     }`}
                             >
                                 {link.name}

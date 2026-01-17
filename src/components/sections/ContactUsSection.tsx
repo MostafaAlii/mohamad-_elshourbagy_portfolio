@@ -10,7 +10,6 @@ export default function ContactUsSection() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // هنا تقدر تضيف logic الإرسال
         console.log('Form submitted:', formData);
         // Reset form
         setFormData({ name: '', email: '', message: '' });
@@ -104,7 +103,7 @@ export default function ContactUsSection() {
                         </div>
                         <h3 className="mb-2 text-lg font-semibold text-contact-label">Phone</h3>
                         <p className="text-sm text-contact-text">
-                            +20 010 2517 8918
+                            +201099327876
                         </p>
                     </div>
                 </div>
