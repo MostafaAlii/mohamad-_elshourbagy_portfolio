@@ -1,57 +1,14 @@
 // src/components/Gallery.tsx
 import { useState, useEffect } from 'react';
-
-type TabType = 'all' | 'courses' | 'camps' | 'feedback';
-
-interface GalleryItem {
-    id: number;
-    category: 'courses' | 'camps' | 'feedback';
-    image: string;
-    title: string;
-}
+import { useGallery } from '../../hooks/useGallery';
 
 export default function GallerySection() {
-    const [activeTab, setActiveTab] = useState<TabType>('all');
+    const { loading, error, getTabs, getFilteredItems } = useGallery();
+    const [activeTab, setActiveTab] = useState<string>('all');
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
-    const tabs: { id: TabType; label: string }[] = [
-        { id: 'all', label: 'All' },
-        { id: 'courses', label: 'Courses' },
-        { id: 'camps', label: 'Camps' },
-        { id: 'feedback', label: 'Feedback' },
-    ];
-
-    const galleryItems: GalleryItem[] = [
-        // Courses
-        { id: 1, category: 'courses', image: '/gallery/courses/1.jpeg', title: 'Course Session 1' },
-        { id: 2, category: 'courses', image: '/gallery/courses/2.jpeg', title: 'Course Session 2' },
-        { id: 3, category: 'courses', image: '/gallery/courses/3.jpeg', title: 'Course Session 3' },
-
-        // Camps
-        { id: 4, category: 'camps', image: '/gallery/camps/1.jpeg', title: 'Nuweiba Camp 2025' },
-        { id: 5, category: 'camps', image: '/gallery/camps/2.jpeg', title: 'Fayoum Camp 2023' },
-        { id: 6, category: 'camps', image: '/gallery/camps/3.jpeg', title: 'Fayoum Camp 2023' },
-        { id: 7, category: 'camps', image: '/gallery/camps/4.jpeg', title: 'Fayoum Camp 2023' },
-        { id: 8, category: 'camps', image: '/gallery/camps/5.jpeg', title: 'Nuweiba Camp 2025' },
-
-        // Feedback
-        { id: 9, category: 'feedback', image: '/gallery/feedback/1.jpeg', title: 'Client Testimonial 1' },
-        { id: 10, category: 'feedback', image: '/gallery/feedback/2.jpeg', title: 'Client Testimonial 2' },
-        { id: 11, category: 'feedback', image: '/gallery/feedback/3.jpeg', title: 'Client Testimonial 3' },
-        { id: 12, category: 'feedback', image: '/gallery/feedback/4.jpeg', title: 'Client Testimonial 4' },
-    ];
-
-    const getFilteredItems = () => {
-        if (activeTab === 'all') {
-            const courses = galleryItems.filter(item => item.category === 'courses').slice(0, 2);
-            const camps = galleryItems.filter(item => item.category === 'camps').slice(0, 2);
-            const feedback = galleryItems.filter(item => item.category === 'feedback').slice(0, 2);
-            return [...courses, ...camps, ...feedback];
-        }
-        return galleryItems.filter(item => item.category === activeTab);
-    };
-
-    const displayedItems = getFilteredItems();
+    const tabs = getTabs();
+    const displayedItems = getFilteredItems(activeTab);
 
     const goToNext = () => {
         if (selectedImageIndex !== null) {
@@ -96,6 +53,32 @@ export default function GallerySection() {
     }, [selectedImageIndex]);
 
     const selectedImage = selectedImageIndex !== null ? displayedItems[selectedImageIndex] : null;
+
+    // Loading state
+    if (loading) {
+        return (
+            <section id="gallery" className="py-10 bg-gallery-bg md:py-14">
+                <div className="max-w-6xl px-4 mx-auto">
+                    <div className="py-20 text-center">
+                        <p className="text-xl text-gallery-subtitle">Loading gallery...</p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <section id="gallery" className="py-10 bg-gallery-bg md:py-14">
+                <div className="max-w-6xl px-4 mx-auto">
+                    <div className="py-20 text-center">
+                        <p className="text-xl text-red-500">{error}</p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <>
@@ -144,8 +127,8 @@ export default function GallerySection() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`relative px-2 py-1 font-medium transition-colors duration-200 ${activeTab === tab.id
-                                        ? 'text-gallery-title'
-                                        : 'text-gallery-subtitle hover:text-gallery-title'
+                                            ? 'text-gallery-title'
+                                            : 'text-gallery-subtitle hover:text-gallery-title'
                                         }`}
                                 >
                                     {tab.label}
@@ -215,7 +198,6 @@ export default function GallerySection() {
             {selectedImage && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn"
-                    onMouseLeave={closeModal}
                     onClick={closeModal}
                 >
                     {/* Close Button */}
