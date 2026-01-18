@@ -1,53 +1,15 @@
+// src/components/Gallery.tsx
 import { useState, useEffect } from 'react';
-type TabType = 'all' | 'courses' | 'camps' | 'feedback';
-interface GalleryItem {
-    id: number;
-    category: 'courses' | 'camps' | 'feedback';
-    image: string;
-    title: string;
-}
+import { useGallery } from '../../hooks/useGallery';
 
 export default function GallerySection() {
-    const [activeTab, setActiveTab] = useState<TabType>('all');
+    const { loading, error, getTabs, getFilteredItems } = useGallery();
+    const [activeTab, setActiveTab] = useState<string>('all');
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
-    const tabs: { id: TabType; label: string }[] = [
-        { id: 'all', label: 'All' },
-        { id: 'courses', label: 'Courses' },
-        { id: 'camps', label: 'Camps' },
-        { id: 'feedback', label: 'Feedback' },
-    ];
+    const tabs = getTabs();
+    const displayedItems = getFilteredItems(activeTab);
 
-    const galleryItems: GalleryItem[] = [
-        // Courses
-        { id: 1, category: 'courses', image: '/gallery/courses/1.jpeg', title: 'Course Session 1' },
-        { id: 2, category: 'courses', image: '/gallery/courses/2.jpeg', title: 'Course Session 2' },
-        { id: 3, category: 'courses', image: '/gallery/courses/3.jpeg', title: 'Course Session 3' },
-
-        // Camps
-        { id: 4, category: 'camps', image: '/gallery/camps/1.jpeg', title: 'Summer Camp 2024' },
-        { id: 5, category: 'camps', image: '/gallery/camps/2.jpeg', title: 'Winter Camp 2024' },
-        { id: 6, category: 'camps', image: '/gallery/camps/3.jpeg', title: 'Adventure Camp' },
-        { id: 7, category: 'camps', image: '/gallery/camps/4.jpeg', title: 'Training Camp' },
-
-        // Feedback
-        { id: 8, category: 'feedback', image: '/gallery/feedback/1.jpeg', title: 'Client Testimonial 1' },
-        { id: 9, category: 'feedback', image: '/gallery/feedback/2.jpeg', title: 'Client Testimonial 2' },
-        { id: 10, category: 'feedback', image: '/gallery/feedback/3.jpeg', title: 'Client Testimonial 3' },
-        { id: 11, category: 'feedback', image: '/gallery/feedback/4.jpeg', title: 'Client Testimonial 4' },
-    ];
-
-    const getFilteredItems = () => {
-        if (activeTab === 'all') {
-            const courses = galleryItems.filter(item => item.category === 'courses').slice(0, 2);
-            const camps = galleryItems.filter(item => item.category === 'camps').slice(0, 2);
-            const feedback = galleryItems.filter(item => item.category === 'feedback').slice(0, 2);
-            return [...courses, ...camps, ...feedback];
-        }
-        return galleryItems.filter(item => item.category === activeTab);
-    };
-
-    const displayedItems = getFilteredItems();
     const goToNext = () => {
         if (selectedImageIndex !== null) {
             setSelectedImageIndex((selectedImageIndex + 1) % displayedItems.length);
@@ -78,10 +40,79 @@ export default function GallerySection() {
         return () => window.removeEventListener('keydown', handleKeyPress);
     }, [selectedImageIndex, displayedItems.length]);
 
+    // Prevent body scroll when modal is open
+    useEffect(() => {
+        if (selectedImageIndex !== null) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [selectedImageIndex]);
+
     const selectedImage = selectedImageIndex !== null ? displayedItems[selectedImageIndex] : null;
+
+    // Loading state
+    if (loading) {
+        return (
+            <section id="gallery" className="py-10 bg-gallery-bg md:py-14">
+                <div className="max-w-6xl px-4 mx-auto">
+                    <div className="py-20 text-center">
+                        <p className="text-xl text-gallery-subtitle">Loading gallery...</p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <section id="gallery" className="py-10 bg-gallery-bg md:py-14">
+                <div className="max-w-6xl px-4 mx-auto">
+                    <div className="py-20 text-center">
+                        <p className="text-xl text-red-500">{error}</p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <>
+            {/* Add animations to global styles */}
+            <style>{`
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                    }
+                    to {
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes scaleIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+
+                .animate-fadeIn {
+                    animation: fadeIn 0.3s ease-out;
+                }
+
+                .animate-scaleIn {
+                    animation: scaleIn 0.3s ease-out;
+                }
+            `}</style>
+
             <section id="gallery" className="py-10 bg-gallery-bg md:py-14">
                 <div className="max-w-6xl px-4 mx-auto">
                     <div className="mb-6 text-center md:mb-8">
@@ -115,12 +146,13 @@ export default function GallerySection() {
                             <div
                                 key={item.id}
                                 className="relative overflow-hidden transition-transform duration-300 rounded-lg shadow-lg cursor-pointer group hover:scale-105"
+                                onMouseEnter={() => setSelectedImageIndex(index)}
                                 onClick={() => setSelectedImageIndex(index)}
                             >
                                 <img
                                     src={item.image}
                                     alt={item.title}
-                                    className="object-cover w-full h-64"
+                                    className="object-cover w-full h-64 transition-transform duration-500 group-hover:scale-110"
                                 />
                                 {/* Overlay on hover */}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300 opacity-0 bg-black/40 group-hover:opacity-100">
@@ -165,13 +197,14 @@ export default function GallerySection() {
             {/* Fullscreen Image Modal */}
             {selectedImage && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fadeIn"
                     onClick={closeModal}
                 >
                     {/* Close Button */}
                     <button
                         onClick={closeModal}
-                        className="absolute z-20 p-3 text-white transition-all duration-200 bg-black rounded-full top-4 right-4 bg-opacity-60 hover:bg-opacity-100"
+                        className="absolute z-20 p-3 text-white transition-all duration-200 rounded-full bg-white/10 backdrop-blur-md top-6 right-6 hover:bg-white/20 hover:scale-110 hover:rotate-90"
+                        aria-label="Close"
                     >
                         <svg
                             className="w-6 h-6"
@@ -189,68 +222,76 @@ export default function GallerySection() {
                     </button>
 
                     {/* Previous Arrow */}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            goToPrevious();
-                        }}
-                        className="absolute z-20 p-4 text-white transition-all duration-200 bg-black rounded-full left-4 bg-opacity-60 hover:bg-opacity-100 hover:scale-110"
-                    >
-                        <svg
-                            className="w-8 h-8"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    {displayedItems.length > 1 && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                goToPrevious();
+                            }}
+                            className="absolute z-20 p-4 text-white transition-all duration-200 rounded-full bg-white/10 backdrop-blur-md left-6 hover:bg-white/20 hover:scale-110"
+                            aria-label="Previous image"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 19l-7-7 7-7"
-                            />
-                        </svg>
-                    </button>
+                            <svg
+                                className="w-8 h-8"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 19l-7-7 7-7"
+                                />
+                            </svg>
+                        </button>
+                    )}
 
                     {/* Next Arrow */}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            goToNext();
-                        }}
-                        className="absolute z-20 p-4 text-white transition-all duration-200 bg-black rounded-full right-4 bg-opacity-60 hover:bg-opacity-100 hover:scale-110"
-                    >
-                        <svg
-                            className="w-8 h-8"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    {displayedItems.length > 1 && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                goToNext();
+                            }}
+                            className="absolute z-20 p-4 text-white transition-all duration-200 rounded-full bg-white/10 backdrop-blur-md right-6 hover:bg-white/20 hover:scale-110"
+                            aria-label="Next image"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5l7 7-7 7"
-                            />
-                        </svg>
-                    </button>
+                            <svg
+                                className="w-8 h-8"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                />
+                            </svg>
+                        </button>
+                    )}
 
                     {/* Image Container */}
                     <div
-                        className="relative flex items-center justify-center w-full h-full p-8"
+                        className="relative flex items-center justify-center w-full h-full p-4 md:p-12"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <img
                             src={selectedImage.image}
                             alt={selectedImage.title}
-                            className="object-contain max-w-full max-h-full"
+                            className="object-contain w-full h-full max-w-7xl max-h-[90vh] rounded-lg shadow-2xl animate-scaleIn"
                         />
 
                         {/* Image Counter & Title */}
-                        <div className="absolute bottom-0 left-0 right-0 p-6 text-center bg-gradient-to-t from-black/80 via-black/50 to-transparent">
-                            <p className="mb-2 text-sm text-gray-300">
-                                {selectedImageIndex + 1} / {displayedItems.length}
-                            </p>
-                            <p className="text-2xl font-semibold text-white">
+                        <div className="absolute bottom-0 left-0 right-0 p-6 text-center rounded-b-lg bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                            {displayedItems.length > 1 && (
+                                <p className="mb-2 text-sm font-medium text-gray-300">
+                                    {selectedImageIndex + 1} / {displayedItems.length}
+                                </p>
+                            )}
+                            <p className="text-xl font-semibold text-white md:text-2xl">
                                 {selectedImage.title}
                             </p>
                         </div>
